@@ -122,7 +122,7 @@ class RAGSystem:
             # List of keywords that might indicate out-of-scope questions
             out_of_scope_keywords = [
                 "weather", "news", "current events", "stock market",
-                "politics", "sports", "create", "generate", "make",
+                "politics", "sports", "create", "make",
                 "write code", "programming", "what is your name",
                 "who are you", "tell me about yourself"
             ]
