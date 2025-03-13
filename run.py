@@ -11,5 +11,5 @@ if __name__ == "__main__":
         
     # Launch the Gradio interface
     print("Starting CSVQuery-RAG system...")
-    print("The interface will be available at http://localhost:7860")
+    print("\033[34m\033[4mhttp://localhost:7860\033[0m")
     demo.launch() 
