@@ -54,6 +54,20 @@ The application will be available at http://localhost:7860
 - Smart query validation to ensure responses stay within data context
 - Comprehensive system prompting for accurate and relevant answers
 
+## Sample Data
+
+The system comes with mock car sales data covering the period from January 2020 to December 2020. This dataset includes information about various car brands, their sales figures, and related metrics throughout the year.
+
+### Sample Queries
+
+Here are some example queries you can try:
+- "How many Toyota cars were sold in May 2020?"
+- "How many units of Honda were sold in June and July 2020?"
+- "Which car model had the lowest sales in 2020?"
+- "How much revenue did BMW generate in Q3 2020?"
+- "Did Ford or BMW sell more cars in December 2020?"
+- "Which car model had the highest sales from January to May 2020?"
+
 ## Query Guidelines
 
 The system is designed to:
