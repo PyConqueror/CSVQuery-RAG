@@ -8,6 +8,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 import logging
+from typing import Union
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -64,8 +65,8 @@ class RAGSystem:
             # Split text into chunks
             logger.info("Splitting text into chunks...")
             text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1000,
-                chunk_overlap=200,
+                chunk_size=500,
+                chunk_overlap=150,
                 length_function=len,
             )
             texts = text_splitter.create_documents(documents)
@@ -98,7 +99,7 @@ class RAGSystem:
                 llm=llm,
                 retriever=self.vectorstore.as_retriever(
                     search_type="similarity",
-                    search_kwargs={"k": 50}
+                    search_kwargs={"k": 100}
                 ),
                 memory=memory,
                 return_source_documents=False,
@@ -139,8 +140,29 @@ class RAGSystem:
             logger.error(f"Error in query validation: {str(e)}")
             return False
 
-    def query(self, question: str) -> str:
+    def reset_memory(self):
+        """Reset the conversation memory to start a fresh conversation"""
         try:
+            self.qa_chain.memory.clear()
+            logger.info("Conversation memory cleared successfully")
+        except Exception as e:
+            logger.error(f"Error clearing conversation memory: {str(e)}")
+            raise
+
+    def query(self, input_data: Union[str, dict]) -> str:
+        try:
+            # Handle both string and dict input for backward compatibility
+            if isinstance(input_data, str):
+                question = input_data
+                chat_history = []
+            else:
+                question = input_data['question']
+                chat_history = input_data.get('chat_history', [])
+                # Check if this is a reset request
+                if question == "__reset_memory__":
+                    self.reset_memory()
+                    return "Conversation memory has been reset."
+                
             # Input validation
             if not question or not isinstance(question, str):
                 return "Please provide a valid question string."
