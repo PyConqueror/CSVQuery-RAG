@@ -89,6 +89,6 @@ The system will politely decline to answer questions about:
 
 ## System Requirements
 
-- Python 3.8 or higher
+- Python 3.12 or higher
 - OpenAI API key
 - CSV data file (included in backend/db/MOCK_DATA.csv) 
