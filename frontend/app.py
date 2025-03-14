@@ -15,11 +15,15 @@ rag_system = get_rag_system()
 
 # Example conversation pairs showing memory capability
 EXAMPLES = [
-    ["What is the average age in the dataset?"],
-    ["Show me the top 3 highest salaries."],
-    ["How many unique job titles are there?"],
-    ["What is the distribution of employees by department?"],
-    ["Can you compare that with the previous department?"]  # Example of referring to previous context
+    ["How make fields in the dataset?"],
+    ["Tell me about the dataset"],
+    ["Which month had the highest Ford Mustang sales?"],
+    ["How many cars were sold between January and June 2020?"],
+    ["How much revenue did BMW generate in Q3 2020?"],
+    ["Did Ford or BMW sell more cars in December 2022?"],
+    ["Compare the sales of Toyota and Honda in 2020"],
+    ["Which brands sold more than 1000 cars in 2020?"],
+    ["How many Volkswagen models are there?"],
 ]
 
 def format_history(history):
