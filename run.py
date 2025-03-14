@@ -27,7 +27,7 @@ handler.setFormatter(ColorfulFormatter('%(levelname)s:%(name)s:%(message)s'))
 logging.root.addHandler(handler)
 logging.root.setLevel(logging.INFO)
 
-if sys.version_info.major != 3 or sys.version_info.minor <= 12:
+if sys.version_info.major != 3:
     print(f"{Fore.RED}Error: This application requires Python 3.12{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}Current Python version: {sys.version_info.major}.{sys.version_info.minor}{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}Please upgrade to Python 3.12 or higher as some required libraries are only available in this version.{Style.RESET_ALL}")
