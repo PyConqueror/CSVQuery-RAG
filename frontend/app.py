@@ -13,7 +13,7 @@ EXAMPLE_PROMPTS = [
     "List all the columns available in the dataset.?",
     "Tell me about the dataset",
     "Find the top 5 entries with the highest total revenue value",
-    "Which brand has the lowest revenue in 2021?",
+    "Which brand has the lowest revenue in 2020?",
     "Tell me the total sales of civic in 2020",
     "Which month had the highest Ford Mustang sales?",
     "How much revenue did BMW generate in Q3 2020?",
@@ -28,16 +28,22 @@ def process_query(message, history):
         
     # Convert chat history to format expected by Langchain
     chat_history = []
-    for human, ai in history:
-        chat_history.append({"question": human, "answer": ai})
-        
+    for entry in history:
+        if entry['role'] == 'user':
+            chat_history.append({"role": "user", "content": entry['content']})
+        elif entry['role'] == 'assistant':
+            chat_history.append({"role": "assistant", "content": entry['content']})
+    
     # Query with chat history context
     response = rag_system.query({
         "question": message,
         "chat_history": chat_history
     })
     
-    history = history + [(message, response)]
+    # Update history as a list of dictionaries
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": response})
+    
     return history, ""
 
 def clear_chat():
@@ -59,7 +65,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         container=True,
         height=600,
         elem_classes="chatbot",
-        scroll_to_output=True
+        type='messages'
     )
     
     with gr.Row():
