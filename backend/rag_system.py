@@ -86,7 +86,7 @@ class RAGSystem:
             llm = ChatOpenAI(
                 temperature=0,
                 model_name="gpt-4-turbo",
-                request_timeout=30
+                request_timeout=60
             )
             
             memory = ConversationBufferMemory(
