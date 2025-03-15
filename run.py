@@ -43,12 +43,12 @@ def spinner_task(stop_event, message):
     sys.stdout.flush()
 
 def display_url_banner(url):
-    border = "+" + "-" * 50 + "+"
-    padding = "|" + " " * 50 + "|"
+    border = "█" * 60
+    padding = "█" + " " * 58 + "█"
     
     url_display = f"http://localhost:7860"
-    url_padding = " " * ((50 - len(url_display)) // 2)
-    url_line = f"|{url_padding}{Fore.YELLOW}{Style.BRIGHT}{url_display}{Style.RESET_ALL}{url_padding}|"
+    url_padding = " " * ((58 - len(url_display)) // 2)
+    url_line = f"█{url_padding}\033[1;38;5;208m\033[1m{url_display}{Style.RESET_ALL}{url_padding}█"
     
     print("\n")
     print(f"{Fore.CYAN}{border}{Style.RESET_ALL}")
