@@ -32,7 +32,7 @@ def __init__(self, csv_path: str)
   - `csv_path`: Path to the CSV file to be processed
 - **Process**:
   1. Validates CSV file existence
-  2. Initializes OpenAI embeddings
+  2. Initializes OpenAI embeddings with error handling
   3. Calls `initialize_system()`
 
 ##### Method: `initialize_system()`
@@ -46,9 +46,10 @@ def initialize_system(self)
   3. Vector Store Creation
   4. Conversation Chain Setup
 - **Key Features**:
-  - Uses RecursiveCharacterTextSplitter (chunk_size=1000, overlap=200)
-  - Implements ConversationalRetrievalChain for maintaining context
+  - Uses RecursiveCharacterTextSplitter (chunk_size=500, overlap=150)
+  - Implements ConversationalRetrievalChain with memory
   - Configures ChatOpenAI with temperature=0 for consistent responses
+  - Uses Chroma vector store with cosine similarity
 
 ##### Method: `is_valid_query()`
 ```python
@@ -60,177 +61,165 @@ def is_valid_query(self, question: str) -> bool
 - **Returns**: Boolean indicating query validity
 - **Validation Checks**:
   - Non-empty string
-  - Not out-of-scope topics
+  - Not out-of-scope topics (using keyword filtering)
   - Relevant to CSV data context
+
+##### Method: `reset_memory()`
+```python
+def reset_memory(self)
+```
+- **Purpose**: Clears the conversation memory
+- **Usage**: Called when starting a new conversation
+- **Process**: Clears the ConversationBufferMemory
 
 ##### Method: `query()`
 ```python
-def query(self, question: str) -> str
+def query(self, input_data: Union[str, dict]) -> str
 ```
 - **Purpose**: Processes user queries and returns responses
 - **Parameters**:
-  - `question`: User's question about the data
+  - `input_data`: Either a string question or a dict with question and chat history
 - **Returns**: Generated response string
-- **Process**:
-  1. Input validation
-  2. Query contextualization
-  3. RAG chain execution
-  4. Error handling
+- **Features**:
+  - Supports memory reset with special command
+  - Adds column context to queries
+  - Handles timeouts and errors gracefully
+  - Validates input before processing
 
 ### 2. Frontend Interface (`frontend/app.py`)
 
 #### Function: `process_query()`
 ```python
-def process_query(message: str, history: list) -> str
+def process_query(message: str, history: list) -> tuple
 ```
 - **Purpose**: Handles user input from Gradio interface
 - **Parameters**:
   - `message`: Current user message
   - `history`: Chat history
-- **Returns**: Generated response
-- **Error Handling**: Graceful handling of empty inputs and exceptions
+- **Returns**: Updated history and empty message
+- **Features**:
+  - Converts chat history to LangChain format
+  - Maintains conversation context
+  - Handles empty messages
+
+#### Function: `clear_chat()`
+```python
+def clear_chat() -> list
+```
+- **Purpose**: Resets the chat interface and backend memory
+- **Returns**: Empty list for chat history
+- **Process**: Calls backend reset_memory()
 
 #### Gradio Interface Configuration
 
-##### ChatInterface Setup
+##### Block-based Interface
 ```python
-demo = gr.ChatInterface(
-    fn=process_query,
-    title="CSVQuery-RAG",
-    description="...",
-    examples=[...],
-    css=custom_css,
-    theme=gr.themes.Soft(...)
-)
+with gr.Blocks(theme=gr.themes.Soft()) as demo:
 ```
 - **Components**:
-  - Custom chat processing function
-  - Predefined example queries
-  - Custom CSS styling
-  - Soft color theme
-
-##### Custom CSS Styling
-```css
-.message.user {
-    /* User message styling */
-}
-.message.bot {
-    /* Bot message styling */
-}
-```
+  - Markdown header
+  - Chatbot interface (600px height)
+  - Query input textbox
+  - Submit and Clear buttons
+  - Example queries section
 - **Features**:
-  - Responsive message bubbles
-  - Different styles for user/bot messages
-  - Custom border radius and padding
-  - Shadow effects for depth
+  - Responsive layout
+  - Example queries for user guidance
+  - Clear chat functionality
+  - Modern Soft theme
 
 ## Data Processing Pipeline
 
 1. **Data Loading**
    - CSV file reading using pandas
    - Column information extraction
-   - Data validation
+   - Data validation and error handling
 
 2. **Text Processing**
    - Document creation from CSV rows
-   - Text chunking for optimal retrieval
+   - Text chunking (500 chars, 150 overlap)
    - Metadata preservation
 
 3. **Vector Store**
    - Document embedding using OpenAI
-   - Chroma vector store implementation
-   - Cosine similarity search
+   - Chroma vector store with cosine similarity
+   - Efficient retrieval (k=100)
 
 4. **Query Processing**
-   - Query validation
-   - Context addition
-   - Response generation
-   - Error handling
+   - Query validation with keyword filtering
+   - Context addition with column information
+   - Response generation with timeout handling
+   - Memory management
 
 ## System Requirements
 
 ### Software Dependencies
 - Python 3.8+
 - OpenAI API access
-- Required Python packages:
+- Required Python packages (see requirements.txt):
   - langchain
+  - langchain_openai
+  - langchain_community
   - gradio
   - pandas
   - chromadb
   - python-dotenv
 
 ### Environment Configuration
-- `.env` file with OpenAI API key
+- `.env` file with OPENAI_API_KEY
 - CSV data file in `backend/db/`
 - Sufficient system memory for vector operations
 
 ## Performance Considerations
 
 1. **Vector Store**
-   - Optimized for similarity search
-   - Configurable chunk size and overlap
-   - Memory usage scales with data size
+   - Optimized chunk size (500) and overlap (150)
+   - Cosine similarity for better matching
+   - Retrieves top 100 similar chunks
 
 2. **Query Processing**
-   - Timeout handling for long queries
-   - Configurable response parameters
-   - Context window management
+   - 30-second timeout for queries
+   - Memory management for conversations
+   - Efficient chat history handling
 
 3. **UI Performance**
    - Responsive chat interface
    - Efficient message handling
-   - Browser compatibility
+   - Example queries for better UX
 
 ## Security Considerations
 
 1. **API Key Management**
-   - Environment variable usage
-   - No hardcoded credentials
-   - Secure key validation
+   - Environment variable validation
+   - Explicit error handling
+   - Secure key loading
 
 2. **Input Validation**
    - Query sanitization
+   - Out-of-scope detection
    - Error boundary implementation
-   - Safe data handling
 
 3. **Data Privacy**
    - Local vector store
-   - Configurable data retention
    - No external data storage
+   - Secure conversation handling
 
 ## Error Handling
 
 1. **System Initialization**
    - CSV file validation
    - API key verification
-   - Environment setup checks
+   - Comprehensive logging
 
 2. **Query Processing**
    - Invalid query detection
-   - Timeout management
-   - Exception handling
+   - Timeout management (30s)
+   - Graceful error handling
 
 3. **UI Error Handling**
-   - Input validation
-   - Response formatting
-   - Connection error handling
-
-## Best Practices
-
-1. **Code Organization**
-   - Modular architecture
-   - Clear separation of concerns
-   - Consistent naming conventions
-
-2. **Documentation**
-   - Inline code comments
-   - Function documentation
-   - System architecture details
-
-3. **Testing**
-   - Input validation testing
-   - Error handling verification
-   - Response quality assurance
+   - Empty input handling
+   - Clear chat functionality
+   - Error message display
 
 ## Deployment
 
@@ -238,15 +227,16 @@ demo = gr.ChatInterface(
 ```bash
 python run.py
 ```
-- Runs on localhost:7860
-- Configurable host/port
+- Runs on 0.0.0.0:7860
+- Accessible via web browser
 - Development mode support
 
 2. **Production Considerations**
    - Environment configuration
-   - Error logging
-   - Performance monitoring
-   - Security hardening
+   - Comprehensive logging
+   - Error handling
+   - Memory management
+   - Security measures
 
 ## Maintenance and Updates
 
