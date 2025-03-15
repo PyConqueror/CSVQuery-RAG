@@ -11,7 +11,7 @@ CSVQuery-RAG is built on a modular architecture consisting of two main component
 - **Language**: Python 3.8+
 - **RAG Implementation**: LangChain
 - **Vector Store**: Chroma
-- **LLM**: OpenAI GPT (gpt-3.5-turbo)
+- **LLM**: OpenAI GPT-4 Turbo
 - **UI Framework**: Gradio
 - **Embeddings**: OpenAI Embeddings
 
@@ -46,10 +46,10 @@ def initialize_system(self)
   3. Vector Store Creation
   4. Conversation Chain Setup
 - **Key Features**:
-  - Uses RecursiveCharacterTextSplitter (chunk_size=500, overlap=150)
-  - Implements ConversationalRetrievalChain with memory
-  - Configures ChatOpenAI with temperature=0 for consistent responses
-  - Uses Chroma vector store with cosine similarity
+  - Uses RecursiveCharacterTextSplitter (chunk_size=300, overlap=50) with CSV-optimized separators
+  - Implements ConversationalRetrievalChain with MMR retrieval for diversity
+  - Configures ChatOpenAI (GPT-4 Turbo) with temperature=0 and 60s timeout
+  - Uses Chroma vector store with enhanced HNSW parameters
 
 ##### Method: `is_valid_query()`
 ```python
@@ -136,14 +136,14 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
    - Data validation and error handling
 
 2. **Text Processing**
-   - Document creation from CSV rows
-   - Text chunking (500 chars, 150 overlap)
-   - Metadata preservation
+   - Document creation from CSV rows with enhanced metadata
+   - Text chunking (300 chars, 50 overlap) with CSV-specific separators
+   - Rich metadata tracking (chunk ID, source, columns)
 
 3. **Vector Store**
-   - Document embedding using OpenAI
-   - Chroma vector store with cosine similarity
-   - Efficient retrieval (k=100)
+   - Document embedding using OpenAI with metadata enrichment
+   - Chroma vector store with optimized HNSW (construction_ef: 200, search_ef: 100)
+   - MMR retrieval (k=5, fetch_k=20, lambda_mult=0.7)
 
 4. **Query Processing**
    - Query validation with keyword filtering
@@ -173,12 +173,12 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 ## Performance Considerations
 
 1. **Vector Store**
-   - Optimized chunk size (500) and overlap (150)
-   - Cosine similarity for better matching
-   - Retrieves top 100 similar chunks
+   - Optimized chunk size (300) and overlap (50)
+   - MMR search for balanced diversity and relevance
+   - Enhanced HNSW parameters for improved accuracy
 
 2. **Query Processing**
-   - 30-second timeout for queries
+   - 60-second timeout for complex queries
    - Memory management for conversations
    - Efficient chat history handling
 
