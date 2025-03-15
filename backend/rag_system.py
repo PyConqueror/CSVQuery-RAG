@@ -62,22 +62,41 @@ class RAGSystem:
                 doc = " ".join([f"{col}: {str(val)}" for col, val in row.items()])
                 documents.append(doc)
 
-            # Split text into chunks
-            logger.info("Splitting text into chunks...")
+            # Enhanced text splitting with optimized parameters
+            logger.info("Splitting text into chunks with optimized parameters...")
             text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=500,
-                chunk_overlap=150,
+                chunk_size=300,  # Smaller chunks for more precise retrieval
+                chunk_overlap=50,  # Reduced overlap to minimize redundancy
                 length_function=len,
+                separators=[",", "\n", " "],  # Custom separators for CSV data
+                keep_separator=True
             )
             texts = text_splitter.create_documents(documents)
             logger.info(f"Created {len(texts)} text chunks")
 
-            # Create vector store
-            logger.info("Creating vector store...")
+            # Enhanced vector store with metadata
+            logger.info("Creating vector store with enhanced configuration...")
+            # Add metadata to each document
+            texts_with_metadata = []
+            for idx, text in enumerate(texts):
+                metadata = {
+                    'chunk_id': idx,
+                    'source': 'csv_data',
+                    'columns': self.columns_info
+                }
+                texts_with_metadata.append({
+                    'page_content': text,
+                    'metadata': metadata
+                })
+
             self.vectorstore = Chroma.from_documents(
                 documents=texts,
                 embedding=self.embeddings,
-                collection_metadata={"hnsw:space": "cosine"}
+                collection_metadata={
+                    "hnsw:space": "cosine",
+                    "hnsw:construction_ef": 200,  # Increased accuracy during index construction
+                    "hnsw:search_ef": 100  # Increased accuracy during search
+                }
             )
             logger.info("Vector store created successfully")
 
@@ -98,8 +117,12 @@ class RAGSystem:
             self.qa_chain = ConversationalRetrievalChain.from_llm(
                 llm=llm,
                 retriever=self.vectorstore.as_retriever(
-                    search_type="similarity",
-                    search_kwargs={"k": 100}
+                    search_type="mmr",  # use MMR for better diversity in results
+                    search_kwargs={
+                        "k": 10,  # Reduced k for more focused results
+                        "fetch_k": 30,  # Fetch more candidates for MMR
+                        "lambda_mult": 0.7  # Balance between relevance and diversity
+                    }
                 ),
                 memory=memory,
                 return_source_documents=False,
