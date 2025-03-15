@@ -85,7 +85,7 @@ class RAGSystem:
             logger.info("Initializing conversation chain...")
             llm = ChatOpenAI(
                 temperature=0,
-                model_name="gpt-4.5-turbo",
+                model_name="gpt-4-turbo",
                 request_timeout=30
             )
             
