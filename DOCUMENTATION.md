@@ -2,9 +2,10 @@
 
 ## System Architecture
 
-CSVQuery-RAG is built on a modular architecture consisting of two main components:
+CSVQuery-RAG is built on a modular architecture consisting of three main components:
 1. Backend RAG System (`backend/rag_system.py`)
-2. Frontend Gradio Interface (`frontend/app.py`)
+2. System Prompts Module (`backend/system_prompts.py`)
+3. Frontend Gradio Interface (`frontend/app.py`)
 
 ## Technical Stack
 
@@ -110,6 +111,30 @@ def clear_chat() -> list
 - **Returns**: Empty list for chat history
 - **Process**: Calls backend reset_memory()
 
+### 3. System Prompts Module (`backend/system_prompts.py`)
+
+#### Constants
+```python
+MAIN_SYSTEM_PROMPT
+RETRIEVAL_CONTEXT_PROMPT
+```
+- **Purpose**: Define system prompts for controlling LLM behavior
+- **Usage**: Ensures the model only answers questions within the CSV data context
+
+#### Function: `get_combined_prompt()`
+```python
+def get_combined_prompt(context: str = "", columns_info: str = "") -> str
+```
+- **Purpose**: Combines system prompts with contextual information
+- **Parameters**:
+  - `context`: Additional context retrieved from the vector store
+  - `columns_info`: Information about the columns in the CSV
+- **Returns**: Complete system prompt with context
+- **Features**:
+  - Incorporates dataset column information
+  - Enforces strict query boundary enforcement
+  - Ensures responses are based solely on CSV data
+
 #### Gradio Interface Configuration
 
 ##### Block-based Interface
@@ -150,6 +175,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
    - Context addition with column information
    - Response generation with timeout handling
    - Memory management
+   - System prompt enforcement of query boundaries
 
 ## System Requirements
 
@@ -196,7 +222,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 
 2. **Input Validation**
    - Query sanitization
-   - Out-of-scope detection
+   - Out-of-scope detection via system prompts
+   - Two-layer validation (keyword filtering and system prompt enforcement)
    - Error boundary implementation
 
 3. **Data Privacy**
@@ -262,6 +289,7 @@ python run.py
    - Advanced query capabilities
    - Enhanced error handling
    - UI customization options
+   - Refined system prompts for even better query boundary enforcement
 
 2. **Scalability Options**
    - Distributed processing
