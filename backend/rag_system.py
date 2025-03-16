@@ -6,9 +6,10 @@ from langchain_community.vectorstores import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
+from langchain.prompts import PromptTemplate, ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
 import logging
 from typing import Union
+from backend.system_prompts import get_combined_prompt
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -100,7 +101,7 @@ class RAGSystem:
             )
             logger.info("Vector store created successfully")
 
-            # Initialize conversation chain
+            # Initialize conversation chain with system prompt
             logger.info("Initializing conversation chain...")
             llm = ChatOpenAI(
                 temperature=0,
@@ -113,7 +114,17 @@ class RAGSystem:
                 return_messages=True,
                 output_key='answer'
             )
-
+            
+            # Create a prompt template with system message
+            system_prompt = get_combined_prompt(columns_info=self.columns_info)
+            logger.info("System prompt configured for RAG")
+            
+            # Create a proper prompt template that includes both context and question
+            # Note: StuffDocumentsChain requires a prompt template with 'context' variable
+            prompt_template = f"{system_prompt}\n\nContext: {{context}}\n\nQuestion: {{question}}"
+            prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
+            logger.info("Created prompt template with context and question variables")
+            
             self.qa_chain = ConversationalRetrievalChain.from_llm(
                 llm=llm,
                 retriever=self.vectorstore.as_retriever(
@@ -126,7 +137,8 @@ class RAGSystem:
                 ),
                 memory=memory,
                 return_source_documents=False,
-                chain_type="stuff"
+                chain_type="stuff",
+                combine_docs_chain_kwargs={"prompt": prompt}
             )
             logger.info("Conversation chain initialized successfully")
             
@@ -194,12 +206,9 @@ class RAGSystem:
             if not self.is_valid_query(question):
                 return "I can only answer questions about the data in the CSV file. This question appears to be outside the scope of the available data."
                 
-            # Add context about available columns
-            contextualized_question = (
-                f"Based on the CSV data with columns: {self.columns_info}\n"
-                f"Please answer this question: {question}\n"
-                "If the answer cannot be found in the data, say 'I cannot find this information in the provided data.'"
-            )
+            # We don't need to manually add column context since it's in the system prompt now
+            # Just pass the question directly to use our configured system prompt
+            contextualized_question = question
             
             logger.info(f"Processing query: {question}")
             
